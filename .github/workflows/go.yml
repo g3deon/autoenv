@@ -17,9 +17,6 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
 
-      - name: Install dependencies
-        run: go mod tidy
-
       - name: Lint
         run: go vet ./...
 
