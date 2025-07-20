@@ -59,6 +59,7 @@ func TestLoadEnvFile(t *testing.T) {
 				t.Error("Expected error but got none")
 				return
 			}
+
 			if !tc.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 				return
@@ -109,10 +110,12 @@ func TestFileExists(t *testing.T) {
 				t.Error("Expected error but got none")
 				return
 			}
+
 			if !tc.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 				return
 			}
+
 			if exists != tc.expectExists {
 				t.Errorf("Expected exists=%v but got %v", tc.expectExists, exists)
 				return
@@ -168,6 +171,7 @@ func TestParseFile(t *testing.T) {
 				t.Error("Expected error but got none")
 				return
 			}
+
 			if !tc.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 				return
@@ -250,26 +254,26 @@ func TestProcessLine(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.shouldSetEnv {
-				originalValue := os.Getenv(tc.expectedKey)
-				defer func() {
-					if originalValue == "" {
-						os.Unsetenv(tc.expectedKey)
-					} else {
-						os.Setenv(tc.expectedKey, originalValue)
-					}
-				}()
-				os.Unsetenv(tc.expectedKey)
+			if !tc.shouldSetEnv {
+				return
 			}
 
-			processLine(tc.line)
-
-			if tc.shouldSetEnv {
-				actualValue := os.Getenv(tc.expectedKey)
-				if actualValue != tc.expectedValue {
-					t.Errorf("Expected env var %s=%s but got %s", tc.expectedKey, tc.expectedValue, actualValue)
+			originalValue := os.Getenv(tc.expectedKey)
+			defer func() {
+				if originalValue == "" {
+					os.Unsetenv(tc.expectedKey)
 					return
 				}
+
+				os.Setenv(tc.expectedKey, originalValue)
+			}()
+
+			os.Unsetenv(tc.expectedKey)
+			processLine(tc.line)
+
+			actualValue := os.Getenv(tc.expectedKey)
+			if actualValue != tc.expectedValue {
+				t.Errorf("Expected env var %s=%s but got %s", tc.expectedKey, tc.expectedValue, actualValue)
 			}
 		})
 	}
