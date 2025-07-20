@@ -1,0 +1,18 @@
+# Se more information in https://git-scm.com/docs/gitattributes
+
+# Specifies that all files should be treated as text files, and Git should
+# automatically handle the end-of-line (EOL) conversion according to the local
+# operating system. This helps maintain consistency in handling line endings
+# across different platforms (Windows, Linux, macOS).
+* text=auto
+
+# For files with the extension .go (Go source code), this configuration specifies
+# that they should be treated as text files, and the end-of-line (EOL) convention should
+# be LF (linefeed). This is common in Unix and Linux environments.
+*.go text eol=lf
+
+# This indicates that they should not be treated as text files (-crlf), and automatic differences
+# (-diff) and merges (-merge) should be avoided in case of conflicts. This is because binary images
+# cannot be merged or compared significantly at the line level.
+*.jpg -crlf -diff -merge
+*.png -crlf -diff -merge

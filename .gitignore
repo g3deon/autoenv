@@ -1,0 +1,75 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Ignore build artifacts
+.build/
+
+# Idea
+.idea/
+
+# VS Code
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Expected VS Code extensions recomendations
+.vscode/*
+!/.vscode/extensions.json
+
+# Vim
+*.sw?
+
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Kate editor
+*.kate-swp
+
+# macOS nib
+*.nib
+
+# Log files
+*.log
+
+# env files
+.env.*
+.env
+!.env.example
