@@ -3,6 +3,7 @@ package autoenv
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestIsFieldIgnored(t *testing.T) {
@@ -317,6 +318,82 @@ func TestShouldIncludeField(t *testing.T) {
 
 			if result != tt.expectedResult {
 				t.Errorf("shouldIncludeField() = %v, want %v", result, tt.expectedResult)
+			}
+		})
+	}
+}
+
+func TestSetFieldValue(t *testing.T) {
+	loader := NewLoader()
+	now := time.Now().Truncate(time.Second).UTC()
+
+	tests := []struct {
+		name     string
+		field    reflect.Value
+		value    string
+		expected any
+	}{
+		{
+			name:     "time.Duration field",
+			field:    reflect.ValueOf(new(time.Duration)).Elem(),
+			value:    "1h30m",
+			expected: time.Hour + 30*time.Minute,
+		},
+		{
+			name:     "time.Time field",
+			field:    reflect.ValueOf(new(time.Time)).Elem(),
+			value:    now.Format(time.RFC3339),
+			expected: now,
+		},
+		{
+			name:     "slice of time.Duration",
+			field:    reflect.ValueOf([]time.Duration{}),
+			value:    "1s,2m,3h",
+			expected: []time.Duration{time.Second, 2 * time.Minute, 3 * time.Hour},
+		},
+		{
+			name:     "slice of time.Time",
+			field:    reflect.ValueOf([]time.Time{}),
+			value:    now.Format(time.RFC3339) + "," + now.Add(time.Hour).Format(time.RFC3339),
+			expected: []time.Time{now, now.Add(time.Hour)},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fv := tt.field
+			if fv.Kind() == reflect.Slice && fv.Len() == 0 {
+				fv = reflect.New(tt.field.Type()).Elem()
+			}
+			if err := loader.setFieldValue(fv, tt.value); err != nil {
+				t.Fatalf("failed to set field: %v", err)
+			}
+
+			switch expected := tt.expected.(type) {
+			case time.Duration:
+				got := fv.Interface().(time.Duration)
+				if got != expected {
+					t.Errorf("expected %v, got %v", expected, got)
+				}
+			case time.Time:
+				got := fv.Interface().(time.Time)
+				if !got.Equal(expected) {
+					t.Errorf("expected %v, got %v", expected, got)
+				}
+			case []time.Duration:
+				got := fv.Interface().([]time.Duration)
+				for i := range expected {
+					if got[i] != expected[i] {
+						t.Errorf("index %d: expected %v, got %v", i, expected[i], got[i])
+					}
+				}
+			case []time.Time:
+				got := fv.Interface().([]time.Time)
+				for i := range expected {
+					if !got[i].Equal(expected[i]) {
+						t.Errorf("index %d: expected %v, got %v", i, expected[i], got[i])
+					}
+				}
 			}
 		})
 	}

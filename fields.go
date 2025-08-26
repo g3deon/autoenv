@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -136,6 +137,13 @@ func (l *Loader) resolveFieldName(f reflect.StructField) string {
 }
 
 func (l *Loader) setFieldValue(fv reflect.Value, val string) error {
+	if fv.Kind() == reflect.Ptr {
+		if fv.IsNil() {
+			fv.Set(reflect.New(fv.Type().Elem()))
+		}
+		return l.setFieldValue(fv.Elem(), val)
+	}
+
 	switch fv.Kind() {
 	case reflect.String:
 		fv.SetString(val)
@@ -146,6 +154,14 @@ func (l *Loader) setFieldValue(fv reflect.Value, val string) error {
 		}
 		fv.SetBool(b)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if fv.Type() == reflect.TypeOf(time.Duration(0)) {
+			d, err := time.ParseDuration(val)
+			if err != nil {
+				return err
+			}
+			fv.SetInt(int64(d))
+			return nil
+		}
 		i, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
 			return err
@@ -163,42 +179,22 @@ func (l *Loader) setFieldValue(fv reflect.Value, val string) error {
 			return err
 		}
 		fv.SetFloat(f)
+	case reflect.Struct:
+		if fv.Type() == reflect.TypeOf(time.Time{}) {
+			t, err := time.Parse(time.RFC3339, val)
+			if err != nil {
+				return err
+			}
+			fv.Set(reflect.ValueOf(t))
+			return nil
+		}
 	case reflect.Slice:
-		elemKind := fv.Type().Elem().Kind()
 		parts := strings.Split(val, ",")
 		slice := reflect.MakeSlice(fv.Type(), len(parts), len(parts))
 		for i, s := range parts {
 			s = strings.TrimSpace(s)
-			v := slice.Index(i)
-			switch elemKind {
-			case reflect.String:
-				v.SetString(s)
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				ni, err := strconv.ParseInt(s, 10, 64)
-				if err != nil {
-					return err
-				}
-				v.SetInt(ni)
-			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				nu, err := strconv.ParseUint(s, 10, 64)
-				if err != nil {
-					return err
-				}
-				v.SetUint(nu)
-			case reflect.Bool:
-				nb, err := strconv.ParseBool(s)
-				if err != nil {
-					return err
-				}
-				v.SetBool(nb)
-			case reflect.Float32, reflect.Float64:
-				nf, err := strconv.ParseFloat(s, 64)
-				if err != nil {
-					return err
-				}
-				v.SetFloat(nf)
-			default:
-				l.options.logger.ErrorF("unsupported slice element kind: %s", elemKind)
+			if err := l.setFieldValue(slice.Index(i), s); err != nil {
+				return err
 			}
 		}
 		fv.Set(slice)
