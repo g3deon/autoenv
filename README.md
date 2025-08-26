@@ -57,7 +57,47 @@ type Config struct {
 }
 ```
 
+
+## Supported Fields
+
+- string
+	- Value is used as-is.
+- bool
+	- Accepts standard boolean strings (true/false, 1/0, t/f, yes/no).
+- Integers: int, int8, int16, int32, int64
+	- Parsed in base 10.
+	- time.Duration (as int64 underlying) is supported via string parsing with time.ParseDuration syntax (e.g., "150ms", "2s", "1h45m").
+- Unsigned integers: uint, uint8, uint16, uint32, uint64
+	- Parsed in base 10.
+- Floats: float32, float64
+	- Parsed as decimal numbers (e.g., "3.14").
+- time.Time
+	- Parsed using RFC3339 format (e.g., "2024-01-02T15:04:05Z07:00").
+- Slices of supported scalar types
+	- Comma-separated values; each element parsed according to its type.
+	- Whitespace around elements is trimmed.
+	- Examples:
+		- []string: "a,b,c"
+		- []int: "1,2,3"
+		- []bool: "true,false,true"
+		- []float64: "1.1, 2.2, 3.3"
+		- []time.Duration: "500ms, 2s, 1m"
+- Pointers to any supported type
+	- Automatically allocated when a value is provided.
+- Nested/embedded structs
+	- Recursively traversed; field names are flattened using underscore between levels (also combined with prefix and tags as described below).
+
+### Notes and limitations:
+- Only exported struct fields are considered.
+- If configured to use only env tags, fields without env tags are ignored.
+- Unsupported kinds (e.g., maps, complex numbers, arbitrary structs other than time.Time) are not set and will result in an error during parsing.
+
 ## Advanced Features
+
+### Prefix Support
+
+Add a prefix to all environment variables:
+
 
 ### Prefix Support
 
